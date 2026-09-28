@@ -1,0 +1,7 @@
+# Sample order book
+# Format: <ID> <processing_time_p> <deadline_d> <penalty_w>
+JOB_A 3 5 10
+JOB_B 2 4 15
+JOB_C 4 7 20
+JOB_D 1 3 5
+JOB_E 5 12 25
