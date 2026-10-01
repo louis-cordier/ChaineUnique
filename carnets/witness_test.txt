@@ -1,0 +1,4 @@
+# WITNESS BENCHMARK FILE (External verification only)
+# DO NOT READ OR USE BY SCHEDULING ALGORITHMS
+seed 42
+planted_count 5

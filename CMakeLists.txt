@@ -16,12 +16,17 @@ endif()
 set(SOURCES
     src/main.cpp
     src/order_book_parser.cpp
+    src/generator/order_generator.cpp
+    src/visualizer/ascii_timeline.cpp
 )
 
 # Headers
 set(HEADERS
     src/order.hpp
     src/order_book_parser.hpp
+    src/generator/prng.hpp
+    src/generator/order_generator.hpp
+    src/visualizer/ascii_timeline.hpp
 )
 
 add_executable(chaine_unique ${SOURCES} ${HEADERS})
