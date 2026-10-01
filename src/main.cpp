@@ -2,6 +2,7 @@
 #include "order_book_parser.hpp"
 #include "generator/order_generator.hpp"
 #include "visualizer/ascii_timeline.hpp"
+#include "scheduler/feasibility_judge.hpp"
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -13,6 +14,7 @@ void print_help(const char* prog_name) {
               << "General Options:\n"
               << "  -h, --help               Show this help message\n"
               << "  -f, --file PATH          Path to order book file (.txt) to load\n"
+              << "  -j, --judge              Run the Feasibility Judge (Jackson / EDD rule)\n"
               << "  -t, --timeline           Force ASCII timeline display\n\n"
               << "Generator Options (Milestone 1):\n"
               << "  -g, --generate           Generate a new order book with planted solution\n"
@@ -23,13 +25,15 @@ void print_help(const char* prog_name) {
               << "  -w, --witness PATH       Output file path for external witness benchmark (default: carnets/witness.txt)\n\n"
               << "Examples:\n"
               << "  " << prog_name << " carnets/sample.txt\n"
-              << "  " << prog_name << " --generate --seed 12345 --planted 8 --noise 4 --out carnets/book1.txt --witness carnets/witness1.txt\n";
+              << "  " << prog_name << " --judge carnets/sample.txt\n"
+              << "  " << prog_name << " --generate --seed 12345 --planted 8 --noise 4\n";
 }
 
 int main(int argc, char* argv[]) {
     std::string filepath;
     bool mode_generate = false;
     bool force_timeline = false;
+    bool run_judge = false;
 
     GeneratorConfig gen_config;
     std::string out_filepath = "carnets/generated.txt";
@@ -42,6 +46,8 @@ int main(int argc, char* argv[]) {
             return 0;
         } else if (arg == "-g" || arg == "--generate") {
             mode_generate = true;
+        } else if (arg == "-j" || arg == "--judge") {
+            run_judge = true;
         } else if (arg == "-t" || arg == "--timeline") {
             force_timeline = true;
         } else if ((arg == "-f" || arg == "--file") && i + 1 < argc) {
@@ -87,7 +93,14 @@ int main(int argc, char* argv[]) {
                       << "Order book saved to: " << out_filepath << "\n"
                       << "External witness saved to: " << witness_filepath << "\n\n";
 
-            // Preview the generated orders
+            // Run judge if requested
+            if (run_judge) {
+                auto report = evaluate_feasibility(result.orders);
+                std::cout << "Feasibility Judge verdict: "
+                          << (report.is_feasible ? "FEASIBLE (100% on time)" : "INFEASIBLE (Late orders detected)")
+                          << "\n";
+            }
+
             render_schedule_timeline(result.orders, std::cout, force_timeline);
             return 0;
 
@@ -97,7 +110,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // --- EXECUTION MODE 2: Load and Display Order Book ---
+    // --- EXECUTION MODE 2: Load and Process Order Book ---
     if (filepath.empty()) {
         std::cout << "Single-Machine Job Scheduling (Chaine Unique) - Engine v1.0\n"
                   << "No input file or action specified. Run with --help for usage.\n";
@@ -123,7 +136,24 @@ int main(int argc, char* argv[]) {
                   << " Total penalties (w) : " << total_w << " EUR\n"
                   << "========================================\n";
 
-        // Display ASCII timeline if requested or if total_p <= 60
+        // Feasibility Judge Evaluation
+        auto report = evaluate_feasibility(orders);
+        std::cout << "\n----------------------------------------\n"
+                  << "    FEASIBILITY JUDGE (Jackson / EDD)\n"
+                  << "----------------------------------------\n";
+        if (report.is_feasible) {
+            std::cout << " Status: [FEASIBLE] - All " << orders.size() 
+                      << " orders can be delivered 100% on time without delay!\n";
+        } else {
+            std::cout << " Status: [INFEASIBLE] - Cannot deliver all orders on time.\n"
+                      << " Late orders in EDD schedule : " << report.late_order_count << "\n"
+                      << " First late order detected   : " << report.first_late_job_id 
+                      << " (finishes at t=" << report.first_late_completion 
+                      << ", deadline was d=" << report.first_late_deadline << ")\n";
+        }
+        std::cout << "----------------------------------------\n\n";
+
+        // Display ASCII timeline or tabular view
         render_schedule_timeline(orders, std::cout, force_timeline);
 
     } catch (const std::exception& ex) {

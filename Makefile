@@ -5,7 +5,8 @@ TARGET = chaine_unique
 SRCS = src/main.cpp \
        src/order_book_parser.cpp \
        src/generator/order_generator.cpp \
-       src/visualizer/ascii_timeline.cpp
+       src/visualizer/ascii_timeline.cpp \
+       src/scheduler/feasibility_judge.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
