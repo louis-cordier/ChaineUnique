@@ -18,6 +18,7 @@ set(SOURCES
     src/order_book_parser.cpp
     src/generator/order_generator.cpp
     src/visualizer/ascii_timeline.cpp
+    src/scheduler/feasibility_judge.cpp
 )
 
 # Headers
@@ -27,6 +28,7 @@ set(HEADERS
     src/generator/prng.hpp
     src/generator/order_generator.hpp
     src/visualizer/ascii_timeline.hpp
+    src/scheduler/feasibility_judge.hpp
 )
 
 add_executable(chaine_unique ${SOURCES} ${HEADERS})
